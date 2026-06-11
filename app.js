@@ -1,16 +1,10 @@
-const USER_DATABASE = {
-    'admin': { password: 'admin123', role: 'admin', displayName: 'Rendszergazda (Admin)' },
-    'elado': { password: 'elado123', role: 'user', displayName: 'Értékesítő Munkatárs' }
-};
-
-// Az API elérési útja a Vercelen automatikusan a relatív /api/server útvonal lesz
 const API_URL = '/api/server';
 
 let products = [];
 let sales = [];
 let currentUser = JSON.parse(sessionStorage.getItem('airsoft_logged_user')) || null;
 
-// DOM elemek lekérése
+// DOM elemek
 const loginScreen = document.getElementById('login-screen');
 const mainApp = document.getElementById('main-app');
 const loginForm = document.getElementById('login-form');
@@ -25,20 +19,40 @@ const saleFeedback = document.getElementById('sale-feedback');
 const adminFormWrapper = document.getElementById('admin-form-wrapper');
 const adminLockOverlay = document.getElementById('admin-lock-overlay');
 
-// --- AUTHENTICATION ---
-loginForm.addEventListener('submit', (e) => {
+// --- ONLINE BEJELENTKEZÉS ---
+loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const usernameInput = document.getElementById('login-username').value.trim().toLowerCase();
+    const usernameInput = document.getElementById('login-username').value.trim();
     const passwordInput = document.getElementById('login-password').value;
 
-    const user = USER_DATABASE[usernameInput];
-    if (user && user.password === passwordInput) {
-        currentUser = { username: usernameInput, role: user.role, displayName: user.displayName };
-        sessionStorage.setItem('airsoft_logged_user', JSON.stringify(currentUser));
-        loginError.classList.add('hidden');
-        loginForm.reset();
-        checkAuth();
-    } else {
+    try {
+        // Elküldjük a bejelentkezési kérést a backend szervernek
+        const response = await fetch(`${API_URL}?type=login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: usernameInput, password: passwordInput })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            // Ha a szerver jóváhagyta, elmentjük a munkamenetbe
+            currentUser = {
+                username: usernameInput.toLowerCase(),
+                role: result.role,
+                displayName: result.displayName
+            };
+            sessionStorage.setItem('airsoft_logged_user', JSON.stringify(currentUser));
+            loginError.classList.add('hidden');
+            loginForm.reset();
+            checkAuth();
+        } else {
+            // Ha a szerver elutasította
+            loginError.innerText = `⚠️ ${result.error || 'Sikertelen belépés!'}`;
+            loginError.classList.remove('hidden');
+        }
+    } catch (err) {
+        loginError.innerText = '⚠️ Hálózati hiba a szerverrel való kommunikáció során.';
         loginError.classList.remove('hidden');
     }
 });
@@ -70,8 +84,9 @@ function checkAuth() {
     }
 }
 
-// --- ADATOK LEKÉRÉSE A SZERVERRŐL ---
+// --- KÖZPONTI ADATOK LETÖLTÉSE ---
 async function loadDataFromServer() {
+    if (!currentUser) return;
     try {
         const resProducts = await fetch(`${API_URL}?type=products`);
         products = await resProducts.json();
@@ -89,7 +104,7 @@ function formatCurrency(amount) {
     return new Intl.NumberFormat('hu-HU', { style: 'currency', currency: 'HUF', maximumFractionDigits: 0 }).format(amount);
 }
 
-// --- TERMÉK HOZZÁADÁSA A SZERVERRE ---
+// --- ÚJ TERMÉK ---
 productForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!currentUser || currentUser.role !== 'admin') return;
@@ -112,22 +127,20 @@ productForm.addEventListener('submit', async (e) => {
             body: JSON.stringify(newProduct)
         });
         productForm.reset();
-        loadDataFromServer(); // Újratöltés a központi adatbázisból
+        loadDataFromServer();
     } catch (err) {
-        alert("Szerver hiba a mentés során.");
+        alert("Szerver hiba mentéskor.");
     }
 });
 
-// --- ELADÁS KÜLDÉSE A SZERVERRE ---
+// --- ELADÁS RÖGZÍTÉSE ---
 saleForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
     const pId = saleProductSelect.value;
     const qty = Number(document.getElementById('sale-qty').value);
     const product = products.find(p => p.id === pId);
 
     if (!product) return;
-
     if (product.stock < qty) {
         showFeedback('Nincs elég készlet!', 'bg-rose-500/10 text-rose-400 border border-rose-500/20');
         return;
@@ -152,7 +165,7 @@ saleForm.addEventListener('submit', async (e) => {
 
         if (response.ok) {
             saleForm.reset();
-            showFeedback('Sikeres eladás rögzítve a szerveren!', 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20');
+            showFeedback('Eladás rögzítve az adatbázisban!', 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20');
             loadDataFromServer();
         } else {
             const errData = await response.json();
@@ -163,7 +176,7 @@ saleForm.addEventListener('submit', async (e) => {
     }
 });
 
-// --- TERMÉK TÖRLESE A SZERVERRŐL ---
+// --- TERMÉK TÖRÖLÉSE ---
 async function deleteProduct(id) {
     if (!currentUser || currentUser.role !== 'admin') return;
     if (confirm('Biztosan törölni szeretnéd?')) {
@@ -186,7 +199,7 @@ function showFeedback(text, classes) {
     setTimeout(() => saleFeedback.classList.add('hidden'), 4000);
 }
 
-// --- RENDERING (UI) ---
+// --- LÁTVÁNY ÉS TÁBLÁZATOK ---
 function renderAll() {
     renderTable();
     renderSaleSelect();
@@ -257,7 +270,7 @@ function calculateStats() {
     document.getElementById('stats-bestseller').innerText = bestseller;
 }
 
-// 5 másodpercenként automatikusan frissítünk, hogy ha egy másik eladó elad valamit, az nálunk is azonnal megjelenjen!
+// 5 másodpercenkénti szinkronizáció
 setInterval(loadDataFromServer, 5000);
 
 checkAuth();
