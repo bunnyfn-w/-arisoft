@@ -67,7 +67,6 @@
         </nav>
 
         <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-
             <section class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div class="bg-cardBg p-6 rounded-xl border border-gray-800 shadow-lg">
                     <p class="text-sm font-medium text-gray-400 uppercase tracking-wider">Összes Bevétel</p>
@@ -88,14 +87,12 @@
             </section>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                
                 <section id="admin-product-section" class="bg-cardBg p-6 rounded-xl border border-gray-800 shadow-md relative min-h-[300px] flex flex-col justify-center">
                     <div id="admin-lock-overlay" class="hidden absolute inset-0 bg-gray-900/90 rounded-xl flex flex-col items-center justify-center p-6 text-center z-10">
                         <span class="text-3xl mb-2">🔒</span>
                         <p class="text-gray-300 font-medium">Új termék rögzítése letiltva</p>
                         <p class="text-xs text-gray-500 mt-1">Ezt a panelt kizárólag <span class="text-blue-400 font-semibold">Admin</span> jogkörrel rendelkező felhasználók használhatják.</p>
                     </div>
-                    
                     <div id="admin-form-wrapper" class="w-full">
                         <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
                             <span class="text-blue-500">✚</span> Új Termék Hozzáadása
@@ -169,8 +166,8 @@
 
             <section class="bg-cardBg rounded-xl border border-gray-800 shadow-md overflow-hidden">
                 <div class="p-6 border-b border-gray-800 flex justify-between items-center flex-wrap gap-4">
-                    <h2 class="text-lg font-bold text-white">Aktuális Raktárkészlet nyilvántartás</h2>
-                    <span class="text-xs text-gray-400 bg-gray-900 px-3 py-1 rounded-full border border-gray-800">Minden kategória (Élő szinkronizáció)</span>
+                    <h2 class="text-lg font-bold text-white">Aktuális Raktárkészlet</h2>
+                    <span class="text-xs text-gray-400 bg-gray-900 px-3 py-1 rounded-full border border-gray-800">Élő adatbázis szinkronizáció</span>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
@@ -185,12 +182,10 @@
                                 <th class="py-3 px-6 text-center">Művelet</th>
                             </tr>
                         </thead>
-                        <tbody id="product-table-body" class="divide-y divide-gray-800 text-sm">
-                            </tbody>
+                        <tbody id="product-table-body" class="divide-y divide-gray-800 text-sm"></tbody>
                     </table>
                 </div>
             </section>
-
         </main>
     </div>
 
