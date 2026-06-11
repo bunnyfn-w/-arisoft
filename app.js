@@ -4,7 +4,6 @@ let products = [];
 let sales = [];
 let currentUser = JSON.parse(sessionStorage.getItem('airsoft_logged_user')) || null;
 
-// DOM elemek
 const loginScreen = document.getElementById('login-screen');
 const mainApp = document.getElementById('main-app');
 const loginForm = document.getElementById('login-form');
@@ -19,14 +18,12 @@ const saleFeedback = document.getElementById('sale-feedback');
 const adminFormWrapper = document.getElementById('admin-form-wrapper');
 const adminLockOverlay = document.getElementById('admin-lock-overlay');
 
-// --- ONLINE BEJELENTKEZÉS ---
 loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const usernameInput = document.getElementById('login-username').value.trim();
     const passwordInput = document.getElementById('login-password').value;
 
     try {
-        // Elküldjük a bejelentkezési kérést a backend szervernek
         const response = await fetch(`${API_URL}?type=login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -36,7 +33,6 @@ loginForm.addEventListener('submit', async (e) => {
         const result = await response.json();
 
         if (response.ok && result.success) {
-            // Ha a szerver jóváhagyta, elmentjük a munkamenetbe
             currentUser = {
                 username: usernameInput.toLowerCase(),
                 role: result.role,
@@ -47,7 +43,6 @@ loginForm.addEventListener('submit', async (e) => {
             loginForm.reset();
             checkAuth();
         } else {
-            // Ha a szerver elutasította
             loginError.innerText = `⚠️ ${result.error || 'Sikertelen belépés!'}`;
             loginError.classList.remove('hidden');
         }
@@ -76,7 +71,6 @@ function checkAuth() {
             adminFormWrapper.classList.add('hidden');
             adminLockOverlay.classList.remove('hidden');
         }
-        
         loadDataFromServer();
     } else {
         loginScreen.classList.remove('hidden');
@@ -84,7 +78,6 @@ function checkAuth() {
     }
 }
 
-// --- KÖZPONTI ADATOK LETÖLTÉSE ---
 async function loadDataFromServer() {
     if (!currentUser) return;
     try {
@@ -104,7 +97,6 @@ function formatCurrency(amount) {
     return new Intl.NumberFormat('hu-HU', { style: 'currency', currency: 'HUF', maximumFractionDigits: 0 }).format(amount);
 }
 
-// --- ÚJ TERMÉK ---
 productForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!currentUser || currentUser.role !== 'admin') return;
@@ -129,11 +121,10 @@ productForm.addEventListener('submit', async (e) => {
         productForm.reset();
         loadDataFromServer();
     } catch (err) {
-        alert("Szerver hiba mentéskor.");
+        alert("Szerver hiba.");
     }
 });
 
-// --- ELADÁS RÖGZÍTÉSE ---
 saleForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const pId = saleProductSelect.value;
@@ -176,7 +167,6 @@ saleForm.addEventListener('submit', async (e) => {
     }
 });
 
-// --- TERMÉK TÖRÖLÉSE ---
 async function deleteProduct(id) {
     if (!currentUser || currentUser.role !== 'admin') return;
     if (confirm('Biztosan törölni szeretnéd?')) {
@@ -199,7 +189,6 @@ function showFeedback(text, classes) {
     setTimeout(() => saleFeedback.classList.add('hidden'), 4000);
 }
 
-// --- LÁTVÁNY ÉS TÁBLÁZATOK ---
 function renderAll() {
     renderTable();
     renderSaleSelect();
@@ -209,7 +198,7 @@ function renderAll() {
 function renderTable() {
     productTableBody.innerHTML = '';
     if (products.length === 0) {
-        productTableBody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-gray-500 italic">Nincs még termék a szerver adatbázisában.</td></tr>`;
+        productTableBody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-gray-500 italic">Nincs még termék.</td></tr>`;
         return;
     }
 
@@ -270,7 +259,5 @@ function calculateStats() {
     document.getElementById('stats-bestseller').innerText = bestseller;
 }
 
-// 5 másodpercenkénti szinkronizáció
 setInterval(loadDataFromServer, 5000);
-
 checkAuth();
