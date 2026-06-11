@@ -1,18 +1,21 @@
-const { MongoClient } = require('mongodb');
+import { MongoClient } from 'mongodb';
 
 const uri = process.env.MONGODB_URI;
 let client = null;
 
 async function connectDB() {
   if (!client) {
+    if (!uri) {
+      throw new Error("A MONGODB_URI hianyzik a Vercel beallitasokbol!");
+    }
     client = new MongoClient(uri);
     await client.connect();
   }
   return client.db('airsoft_ims');
 }
 
-module.exports = async (req, res) => {
-  // CORS engedélyezése
+export default async function handler(req, res) {
+  // CORS fixek
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -27,7 +30,6 @@ module.exports = async (req, res) => {
     const { type } = req.query;
 
     if (type === 'login' && req.method === 'POST') {
-      // Ha a req.body stringként jönne be, átalakítjuk JSON-ná
       let body = req.body;
       if (typeof body === 'string') {
         body = JSON.parse(body);
@@ -36,11 +38,12 @@ module.exports = async (req, res) => {
       const { username, password } = body;
 
       if (!username || !password) {
-        return res.status(400).json({ error: 'Hiányzó adatok!' });
+        return res.status(400).json({ error: 'Hianyzo adatok!' });
       }
 
-      // Felhasználó keresése
-      const user = await usersCollection.findOne({ username: username.toLowerCase() });
+      const user = await usersCollection.findOne({ 
+        username: { $regex: new RegExp(`^${username}$`, 'i') } 
+      });
 
       if (!user || user.password !== password) {
         return res.status(401).json({ error: '⚠️ bad auth : authentication failed' });
@@ -53,14 +56,12 @@ module.exports = async (req, res) => {
       });
     }
 
-    return res.status(404).json({ error: 'Nem található' });
+    return res.status(404).json({ error: 'Nem talalhato' });
 
   } catch (error) {
-    // Ha bármi hiba van, KÖTELEZŐEN küldje vissza a böngészőnek is, hogy lásd!
     return res.status(500).json({ 
-      error: 'Belső szerverhiba történt!', 
-      details: error.message,
-      stack: error.stack
+      error: 'Belso szerverhiba', 
+      message: error.message 
     });
   }
-};
+}
