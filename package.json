@@ -1,0 +1,9 @@
+{
+  "name": "airsoft-ims",
+  "version": "1.0.0",
+  "description": "Airsoft raktárkezelő rendszer",
+  "main": "server.js",
+  "dependencies": {
+    "mongodb": "^6.3.0"
+  }
+}
