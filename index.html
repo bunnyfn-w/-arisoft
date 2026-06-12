@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Airsoft IMS - Belépés</title>
+    <title>Airsoft IMS</title>
     <style>
         :root {
             --bg-color: #1a1a1a;
@@ -26,13 +26,14 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 20px;
         }
 
+        /* LOGIN FELÜLET STÍLUSA */
         .login-card {
             background-color: var(--panel-bg);
             border: 1px solid var(--border-color);
@@ -118,52 +119,159 @@
             margin-bottom: 20px;
             display: none;
             text-align: center;
-            font-weight: 500;
         }
 
-        .loading-spinner {
-            display: none;
-            color: var(--accent-color);
-            font-weight: bold;
-            margin-top: 15px;
+        /* RENDELÉSI LISTA FELÜLET STÍLUSA */
+        .main-container {
+            width: 100%;
+            max-width: 800px;
+            display: none; /* Alapból rejtve van */
+        }
+
+        header {
+            margin-bottom: 30px;
+            text-align: center;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 15px;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #fff;
+        }
+
+        header p {
+            color: var(--text-muted);
             font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .panel {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .panel h3 {
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            border-left: 4px solid var(--accent-color);
+            padding-left: 10px;
+        }
+
+        .inline-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .inline-form input {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .inline-form button {
+            width: auto;
+            margin-top: 0;
+            padding: 12px 24px;
+        }
+
+        .order-item {
+            background-color: #1c1c1c;
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .order-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .order-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #fff;
+        }
+
+        .btn-shop {
+            background-color: var(--accent-color);
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .empty-message {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 20px;
+            font-style: italic;
+            list-style: none;
         }
     </style>
 </head>
 <body>
 
-<div class="login-card">
+<div id="loginSection" class="login-card">
     <h1>Airsoft IMS</h1>
-    <p>Raktárkezelő & Beszerzés Rendszer</p>
-
+    <p>Belépés a rendszerbe</p>
     <div id="errorBox" class="error-msg"></div>
-
     <div class="form-group">
-        <label for="username">Felhasználónév</label>
-        <input type="text" id="username" placeholder="pl. admin" autocomplete="off">
+        <label>Felhasználónév</label>
+        <input type="text" id="username" placeholder="pl. admin">
     </div>
-
     <div class="form-group">
-        <label for="password">Jelszó</label>
+        <label>Jelszó</label>
         <input type="password" id="password" placeholder="••••••••">
     </div>
+    <button onclick="handleLogin()">Belépés</button>
+</div>
 
-    <button onclick="handleLogin()">Bejelentkezés</button>
-    
-    <div id="loadingStatus" class="loading-spinner">Ellenőrzés a MongoDB-ben...</div>
+<div id="mainSection" class="main-container">
+    <header>
+        <h1>Airsoft IMS</h1>
+        <p>Üdvözlünk! Szükséges beszerzések listája</p>
+    </header>
+
+    <div class="panel">
+        <h3>🛒 Új rendelendő termék hozzáadása</h3>
+        <div class="inline-form">
+            <input type="text" id="orderName" placeholder="Termék neve (pl. Specna Arms Mid-Cap tár)">
+            <input type="url" id="orderLink" placeholder="Vásárlási link (https://...)">
+            <button onclick="addOrder()">Hozzáadás</button>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h3>📋 Aktuális rendelési lista</h3>
+        <ul id="orderList">
+            </ul>
+    </div>
 </div>
 
 <script>
-    // A Vercel API elérési utad
+    // A TE IGAZI FŐ VERCELL LINKED:
     const API_URL = "https://videkiboys-shop.vercel.app/api/server";
 
+    // BEJELENTKEZÉS KEZELÉSE
     async function handleLogin() {
         const usernameInput = document.getElementById('username').value.trim();
         const passwordInput = document.getElementById('password').value.trim();
         const errorBox = document.getElementById('errorBox');
-        const loadingStatus = document.getElementById('loadingStatus');
 
-        // Alap üzenetek elrejtése
         errorBox.style.display = 'none';
 
         if (!usernameInput || !passwordInput) {
@@ -172,50 +280,103 @@
             return;
         }
 
-        loadingStatus.style.display = 'block';
-
         try {
-            // Lekérés a Vercel backendre
             const response = await fetch(`${API_URL}?type=login`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    username: usernameInput,
-                    password: passwordInput
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: usernameInput, password: passwordInput })
             });
 
             const data = await response.json();
 
             if (response.ok && data.success) {
-                // SIKERES BELÉPÉS: Átirányítás a rendelési listára
-                // Eltároljuk a nevet a biztonság kedvéért localstorage-ba
-                localStorage.setItem('ims_user', data.displayName);
-                window.location.href = "admin.html";
+                // SIKER: Elrejtjük a logint, kirakjuk a listát
+                document.getElementById('loginSection').style.display = 'none';
+                
+                // Középről felülre igazítjuk a tartalom elrendezését a képernyőn
+                document.body.style.alignItems = 'flex-start';
+                document.getElementById('mainSection').style.display = 'block';
+
+                // Azonnal betöltjük a meglévő rendeléseket a MongoDB-ből
+                loadOrders();
             } else {
-                // HIBÁS BELÉPÉS (pl. 401-es hiba)
-                errorBox.innerText = data.error || "⚠️ Hibás felhasználónév vagy jelszó!";
+                errorBox.innerText = data.error || "❌ Hibás adatok!";
                 errorBox.style.display = 'block';
             }
-
         } catch (error) {
-            console.error("Bejelentkezési hiba:", error);
-            errorBox.innerText = "❌ Hálózati hiba történt! A szerver nem elérhető.";
+            errorBox.innerText = "❌ Hiba történt a szerverrel való kapcsolat során!";
             errorBox.style.display = 'block';
-        } finally {
-            loadingStatus.style.display = 'none';
         }
     }
 
-    // Enter gomb lenyomására is indítsa el a bejelentkezést
+    // LISTA BETÖLTÉSE A MONGODB-BŐL
+    async function loadOrders() {
+        const listElement = document.getElementById('orderList');
+        try {
+            const response = await fetch(`${API_URL}?type=get_orders`);
+            const orders = await response.json();
+            listElement.innerHTML = '';
+
+            if (orders.length === 0) {
+                listElement.innerHTML = '<li class="empty-message">Nincs jelenleg rendelendő termék.</li>';
+                return;
+            }
+
+            orders.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'order-item';
+                li.innerHTML = `
+                    <div class="order-info">
+                        <span class="order-name">${item.name}</span>
+                    </div>
+                    <a href="${item.link}" target="_blank" class="btn-shop">Vásárlás ➔</a>
+                `;
+                listElement.appendChild(li);
+            });
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    // ÚJ TERMÉK HOZZÁADÁSA
+    async function addOrder() {
+        const nameInput = document.getElementById('orderName');
+        const linkInput = document.getElementById('orderLink');
+        const name = nameInput.value.trim();
+        let link = linkInput.value.trim();
+
+        if (!name || !link) {
+            alert("Töltsd ki a mezőket!");
+            return;
+        }
+
+        if (!/^https?:\/\//i.test(link)) {
+            link = 'https://' + link;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}?type=add_order`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, link })
+            });
+
+            if (response.ok) {
+                nameInput.value = '';
+                linkInput.value = '';
+                loadOrders();
+            }
+        } catch (error) {
+            alert("Nem sikerült menteni!");
+        }
+    }
+
+    // Enter gomb a loginhoz
     document.addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') {
+        if (e.key === 'Enter' && document.getElementById('loginSection').style.display !== 'none') {
             handleLogin();
         }
     });
 </script>
-
 </body>
 </html>
