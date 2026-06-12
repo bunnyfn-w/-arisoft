@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Airsoft IMS - Képes Rendszer</title>
+    <title>Airsoft IMS - All-in-One</title>
     <style>
         :root {
             --bg-color: #161616;
@@ -15,7 +15,7 @@
             --border-color: #2c2c2c;
             --danger-color: #bd3a3a;
             --danger-hover: #962d2d;
-            --warning-color: #d9a714;
+            --tab-inactive: #1c1c1c;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
@@ -37,9 +37,22 @@
 
         /* DASHBOARD (MAIN) */
         .main-container { width: 100%; max-width: 1100px; display: none; }
-        header { margin-bottom: 30px; text-align: center; border-bottom: 2px solid var(--accent-color); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        header { margin-bottom: 20px; text-align: center; border-bottom: 2px solid var(--accent-color); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
         header h1 { font-size: 1.8rem; text-transform: uppercase; color: #fff; }
         
+        .header-controls { display: flex; align-items: center; gap: 15px; }
+        .btn-logout { background-color: var(--danger-color); padding: 8px 16px; font-size: 0.85rem; font-weight: bold; width: auto; text-transform: uppercase; }
+        .btn-logout:hover { background-color: var(--danger-hover); }
+
+        /* TABS NAVIGATION */
+        .tabs-nav { display: flex; gap: 5px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); }
+        .tab-btn { background-color: var(--tab-inactive); color: var(--text-muted); padding: 12px 24px; font-weight: bold; font-size: 0.95rem; border: 1px solid var(--border-color); border-bottom: none; border-radius: 6px 6px 0 0; width: auto; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
+        .tab-btn.active { background-color: var(--panel-bg); color: #fff; border-top: 3px solid var(--accent-color); padding-bottom: 13px; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* STATS / PANELS */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 100px)); gap: 15px; margin-bottom: 25px; }
         .stat-card { background-color: var(--panel-bg); border: 1px solid var(--border-color); padding: 15px; border-radius: 6px; text-align: center; }
         .stat-card p { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; }
@@ -50,8 +63,10 @@
         .panel h3 { margin-bottom: 15px; font-size: 1.1rem; border-left: 4px solid var(--accent-color); padding-left: 10px; text-transform: uppercase; }
         
         .grid-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 150px)); gap: 10px; margin-bottom: 15px; }
-        
-        /* TÁBLÁZAT */
+        .inline-form { display: flex; flex-wrap: wrap; gap: 10px; }
+        .inline-form input { flex: 1; min-width: 200px; }
+
+        /* TABLES & LISTS */
         .table-responsive { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 10px; }
         th, td { padding: 12px 15px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
@@ -65,7 +80,7 @@
         .product-img { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-color); background-color: #111; }
         .id-text { font-size: 0.75rem; color: var(--text-muted); font-family: monospace; }
 
-        .btn-table-shop { background-color: var(--accent-color); color: white; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 0.85rem; display: inline-block; }
+        .btn-table-shop { background-color: var(--accent-color); color: white; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 0.85rem; display: inline-block; text-align: center; }
         .btn-table-shop:hover { background-color: var(--accent-hover); }
         .btn-delete { background-color: var(--danger-color); padding: 6px 12px; font-size: 0.85rem; width: auto; }
         .btn-delete:hover { background-color: var(--danger-hover); }
@@ -75,7 +90,7 @@
 
 <div id="loginSection" class="login-card">
     <h1>Airsoft IMS</h1>
-    <p>Képes Raktár & Profit Kezelő</p>
+    <p>Raktár & Rendelési Mesterrendszer</p>
     <div id="errorBox" class="error-msg"></div>
     <div class="form-group">
         <label>Felhasználónév</label>
@@ -90,57 +105,93 @@
 
 <div id="mainSection" class="main-container">
     <header>
-        <h1>Airsoft Raktárkezelés</h1>
-        <span id="userBadge" style="color: var(--accent-color); font-weight: bold;"></span>
+        <h1>Airsoft Rendszer</h1>
+        <div class="header-controls">
+            <span id="userBadge" style="color: var(--accent-color); font-weight: bold;"></span>
+            <button class="btn-logout" onclick="handleLogout()">Kijelentkezés ✖</button>
+        </div>
     </header>
 
-    <div class="stats-grid">
-        <div class="stat-card">
-            <p>Összes termékfajta</p>
-            <h2 id="statTotalTypes">0</h2>
+    <div class="tabs-nav">
+        <button class="tab-btn active" onclick="switchTab('inventoryTab', this)">📦 Raktárkészlet & Profit</button>
+        <button class="tab-btn" onclick="switchTab('ordersTab', this)">🛒 Szükséges Beszerzések (Lista)</button>
+    </div>
+
+    <div id="inventoryTab" class="tab-content active">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <p>Összes termékfajta</p>
+                <h2 id="statTotalTypes">0</h2>
+            </div>
+            <div class="stat-card">
+                <p>Teljes darabszám</p>
+                <h2 id="statTotalQty">0 db</h2>
+            </div>
+            <div class="stat-card profit">
+                <p>Becsült tiszta profit</p>
+                <h2 id="statTotalProfit">0 Ft</h2>
+            </div>
         </div>
-        <div class="stat-card">
-            <p>Teljes darabszám</p>
-            <h2 id="statTotalQty">0 db</h2>
+
+        <div class="panel">
+            <h3>📦 Új termék rögzítése a raktárba</h3>
+            <div class="grid-inputs">
+                <input type="text" id="itemName" placeholder="Termék neve">
+                <input type="number" id="itemQty" placeholder="Darabszám">
+                <input type="number" id="itemBuyPrice" placeholder="Beszerzési ár (Ft)">
+                <input type="number" id="itemSellPrice" placeholder="Eladási ár (Ft)">
+                <input type="url" id="itemLink" placeholder="Gyors link (opcionális)">
+                <input type="url" id="itemImg" placeholder="Kép URL linkje (opcionális)">
+            </div>
+            <button onclick="addItem()" style="width: auto; padding: 12px 30px;">Termék mentése</button>
         </div>
-        <div class="stat-card profit">
-            <p>Becsült tiszta profit</p>
-            <h2 id="statTotalProfit">0 Ft</h2>
+
+        <div class="panel">
+            <h3>📋 Aktuális Készletnyilvántartás</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Kép</th>
+                            <th>Termék neve & ID</th>
+                            <th>Mennyiség</th>
+                            <th>Beszerzési ár</th>
+                            <th>Eladási ár</th>
+                            <th>Profit / db</th>
+                            <th>Link</th>
+                            <th>Művelet</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventoryTableBody"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <div class="panel">
-        <h3>📦 Új termék rögzítése (Képpel & Linkkel)</h3>
-        <div class="grid-inputs">
-            <input type="text" id="itemName" placeholder="Termék neve (pl. Glock 17)">
-            <input type="number" id="itemQty" placeholder="Darabszám">
-            <input type="number" id="itemBuyPrice" placeholder="Beszerzési ár (Ft)">
-            <input type="number" id="itemSellPrice" placeholder="Eladási ár (Ft)">
-            <input type="url" id="itemLink" placeholder="Vásárlási link (https://...)">
-            <input type="url" id="itemImg" placeholder="Termék képének linkje (URL)">
+    <div id="ordersTab" class="tab-content">
+        <div class="panel">
+            <h3>🛒 Új rendelendő termék felírása</h3>
+            <div class="inline-form">
+                <input type="text" id="orderName" placeholder="Rendelendő dolog neve (pl. Specna Arms M4 tár)">
+                <input type="url" id="orderLink" placeholder="Webshop link (https://...)">
+                <button onclick="addOrder()" style="width: auto; padding: 12px 24px;">Hozzáadás a listához</button>
+            </div>
         </div>
-        <button onclick="addItem()" style="width: auto; padding: 12px 30px;">Termék elmentése</button>
-    </div>
 
-    <div class="panel">
-        <h3>📋 Aktuális Készletnyilvántartás</h3>
-        <div class="table-responsive">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Kép</th>
-                        <th>Termék neve & Azonosító</th>
-                        <th>Mennyiség</th>
-                        <th>Beszerzési ár</th>
-                        <th>Eladási ár</th>
-                        <th>Profit / db</th>
-                        <th>Rendelés</th>
-                        <th>Művelet</th>
-                    </tr>
-                </thead>
-                <tbody id="inventoryTableBody">
-                    </tbody>
-            </table>
+        <div class="panel">
+            <h3>📋 Beszerzendő Dolgok Listája</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Termék neve</th>
+                            <th>Vásárlási hivatkozás</th>
+                            <th>Művelet</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersTableBody"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
@@ -148,12 +199,30 @@
 <script>
     const API_URL = "https://videkiboys-shop.vercel.app/api/server";
 
-    // 1. LOGIN FOLYAMAT
+    // ENTER TÁMOGATÁS LOGINHOZ
+    document.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter' && document.getElementById('loginSection').style.display !== 'none') {
+            handleLogin();
+        }
+    });
+
+    // FÜL VÁLTÓ LOGIKA
+    function switchTab(tabId, btn) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        
+        document.getElementById(tabId).classList.add('active');
+        btn.classList.add('active');
+
+        if(tabId === 'inventoryTab') loadInventory();
+        if(tabId === 'ordersTab') loadOrders();
+    }
+
+    // LOGIN
     async function handleLogin() {
         const user = document.getElementById('username').value.trim();
         const pass = document.getElementById('password').value.trim();
         const errBox = document.getElementById('errorBox');
-
         errBox.style.display = 'none';
 
         try {
@@ -169,18 +238,30 @@
                 document.body.style.alignItems = 'flex-start';
                 document.getElementById('mainSection').style.display = 'block';
                 document.getElementById('userBadge').innerText = `👤 ${data.displayName}`;
+                document.getElementById('password').value = '';
                 loadInventory();
             } else {
                 errBox.innerText = data.error || "❌ Hibás adatok!";
                 errBox.style.display = 'block';
             }
         } catch (e) {
-            errBox.innerText = "❌ Hálózati hiba a szerverrel!";
+            errBox.innerText = "❌ Hálózati hiba történt!";
             errBox.style.display = 'block';
         }
     }
 
-    // 2. KÉSZLET ÉS PROFIT BETÖLTÉSE
+    // LOGOUT
+    function handleLogout() {
+        document.getElementById('mainSection').style.display = 'none';
+        document.getElementById('loginSection').style.display = 'block';
+        document.body.style.alignItems = 'center';
+        
+        // Mezők tisztítása
+        document.getElementById('username').value = '';
+        document.getElementById('password').value = '';
+    }
+
+    // ================= RAKTÁR SCENE MŰVELETEK =================
     async function loadInventory() {
         const tbody = document.getElementById('inventoryTableBody');
         try {
@@ -200,37 +281,21 @@
 
             items.forEach(item => {
                 totalQty += item.quantity;
-                
                 const unitProfit = item.sellPrice - item.buyPrice;
-                if (unitProfit > 0 && item.quantity > 0) {
-                    totalProfit += (unitProfit * item.quantity);
-                }
+                if (unitProfit > 0 && item.quantity > 0) totalProfit += (unitProfit * item.quantity);
 
-                // Darabszám státusz
-                let qtyDisplay = `${item.quantity} db`;
-                if (item.quantity <= 3) {
-                    qtyDisplay = `<span class="badge danger">FOGYÓBAN: ${item.quantity} db</span>`;
-                } else {
-                    qtyDisplay = `<span class="badge success">${item.quantity} db</span>`;
-                }
+                let qtyDisplay = item.quantity <= 3 ? 
+                    `<span class="badge danger">FOGYÓBAN: ${item.quantity} db</span>` : 
+                    `<span class="badge success">${item.quantity} db</span>`;
 
-                // Vásárlás gomb generálása
-                let linkButton = '<span style="color:var(--text-muted); font-style:italic;">Nincs link</span>';
-                if (item.link) {
-                    linkButton = `<a href="${item.link}" target="_blank" class="btn-table-shop">Vásárlás ➔</a>`;
-                }
-
-                // Kép generálása (ha nincs link megadva, rakunk be egy alap szöveget)
-                let imgTag = '<div style="width:50px; height:50px; background:#111; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--text-muted);">No Img</div>';
-                if (item.img) {
-                    imgTag = `<img src="${item.img}" class="product-img" alt="Product">`;
-                }
+                let linkButton = item.link ? `<a href="${item.link}" target="_blank" class="btn-table-shop">Megnyitás ➔</a>` : '<span style="color:var(--text-muted);">Nincs</span>';
+                let imgTag = item.img ? `<img src="${item.img}" class="product-img" alt="Product">` : '<div style="width:50px; height:50px; background:#111; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--text-muted);">No Img</div>';
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${imgTag}</td>
                     <td>
-                        <div style="font-weight:600; color:#fff; font-size:1.05rem;">${item.name}</div>
+                        <div style="font-weight:600; color:#fff;">${item.name}</div>
                         <div class="id-text">ID: ${item._id}</div>
                     </td>
                     <td>${qtyDisplay}</td>
@@ -242,12 +307,8 @@
                 `;
                 tbody.appendChild(tr);
             });
-
             updateStats(totalTypes, totalQty, totalProfit);
-
-        } catch (e) {
-            console.error("Hiba a betöltéskor:", e);
-        }
+        } catch (e) { console.error(e); }
     }
 
     function updateStats(types, qty, profit) {
@@ -256,7 +317,6 @@
         document.getElementById('statTotalProfit').innerText = `${profit.toLocaleString()} Ft`;
     }
 
-    // 3. ÚJ TERMÉK HOZZÁADÁSA
     async function addItem() {
         const name = document.getElementById('itemName').value.trim();
         const quantity = document.getElementById('itemQty').value;
@@ -265,14 +325,8 @@
         let link = document.getElementById('itemLink').value.trim();
         const img = document.getElementById('itemImg').value.trim();
 
-        if (!name || !quantity || !buyPrice || !sellPrice) {
-            alert("A Név, Darabszám, Beszerzési és Eladási ár mezők kitöltése kötelező!");
-            return;
-        }
-
-        if (link && !/^https?:\/\//i.test(link)) {
-            link = 'https://' + link;
-        }
+        if (!name || !quantity || !buyPrice || !sellPrice) { alert("Töltsd ki a kötelező mezőket!"); return; }
+        if (link && !/^https?:\/\//i.test(link)) link = 'https://' + link;
 
         try {
             const res = await fetch(`${API_URL}?type=add_item`, {
@@ -280,7 +334,6 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, quantity, buyPrice, sellPrice, link, img })
             });
-
             if (res.ok) {
                 document.getElementById('itemName').value = '';
                 document.getElementById('itemQty').value = '';
@@ -290,32 +343,71 @@
                 document.getElementById('itemImg').value = '';
                 loadInventory();
             }
-        } catch (e) {
-            alert("Hiba történt a mentéskor!");
-        }
+        } catch (e) { alert("Hiba történt!"); }
     }
 
-    // 4. TERMÉK TÖRLÉSE
     async function deleteItem(id) {
-        if (!confirm("Biztosan törölni akarod ezt a terméket?")) return;
+        if (!confirm("Törlöd ezt a terméket a raktárból?")) return;
+        try {
+            const res = await fetch(`${API_URL}?type=delete_item&id=${id}`, { method: 'DELETE' });
+            if (res.ok) loadInventory();
+        } catch (e) { alert("Hiba a törléskor!"); }
+    }
+
+    // ================= RENDELÉSI LISTA SCENE MŰVELETEK =================
+    async function loadOrders() {
+        const tbody = document.getElementById('ordersTableBody');
+        try {
+            const res = await fetch(`${API_URL}?type=get_orders`);
+            const orders = await res.json();
+            tbody.innerHTML = '';
+
+            if (orders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">Nincs felírt rendelés.</td></tr>';
+                return;
+            }
+
+            orders.forEach(order => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight:600; color:#fff; font-size:1.05rem;">${order.name}</td>
+                    <td><a href="${order.link}" target="_blank" class="btn-table-shop">Vásárlás ➔</a></td>
+                    <td><button class="btn-delete" onclick="deleteOrder('${order._id}')">Megérkezett / Törlés</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch (e) { console.error(e); }
+    }
+
+    async function addOrder() {
+        const nameInput = document.getElementById('orderName');
+        const linkInput = document.getElementById('orderLink');
+        const name = nameInput.value.trim();
+        let link = linkInput.value.trim();
+
+        if (!name || !link) { alert("Kérlek, add meg a nevét és a vásárlási linket is!"); return; }
+        if (!/^https?:\/\//i.test(link)) link = 'https://' + link;
 
         try {
-            const res = await fetch(`${API_URL}?type=delete_item&id=${id}`, {
-                method: 'DELETE'
+            const res = await fetch(`${API_URL}?type=add_order`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, link })
             });
             if (res.ok) {
-                loadInventory();
+                nameInput.value = '';
+                linkInput.value = '';
+                loadOrders();
             }
-        } catch (e) {
-            alert("Nem sikerült törölni!");
-        }
+        } catch (e) { alert("Hiba történt mentéskor!"); }
     }
 
-    document.addEventListener('keypress', function (e) {
-        if (e.key === 'Enter' && document.getElementById('loginSection').style.display !== 'none') {
-            handleLogin();
-        }
-    });
+    async function deleteOrder(id) {
+        try {
+            const res = await fetch(`${API_URL}?type=delete_order&id=${id}`, { method: 'DELETE' });
+            if (res.ok) loadOrders();
+        } catch (e) { alert("Hiba történt!"); }
+    }
 </script>
 </body>
 </html>
