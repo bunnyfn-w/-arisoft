@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Airsoft IMS - Dashboard</title>
+    <title>Airsoft IMS - Képes Rendszer</title>
     <style>
         :root {
             --bg-color: #161616;
@@ -36,7 +36,7 @@
         .error-msg { color: var(--danger-color); background-color: rgba(189, 58, 58, 0.1); border: 1px solid var(--danger-color); padding: 10px; border-radius: 4px; font-size: 0.9rem; margin-bottom: 20px; display: none; }
 
         /* DASHBOARD (MAIN) */
-        .main-container { width: 100%; max-width: 1000px; display: none; }
+        .main-container { width: 100%; max-width: 1100px; display: none; }
         header { margin-bottom: 30px; text-align: center; border-bottom: 2px solid var(--accent-color); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
         header h1 { font-size: 1.8rem; text-transform: uppercase; color: #fff; }
         
@@ -54,7 +54,7 @@
         /* TÁBLÁZAT */
         .table-responsive { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 10px; }
-        th, td { padding: 12px 15px; border-bottom: 1px solid var(--border-color); }
+        th, td { padding: 12px 15px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
         th { background-color: #1a1a1a; color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; }
         tr:hover { background-color: #252525; }
         
@@ -62,6 +62,9 @@
         .badge.danger { background-color: rgba(189, 58, 58, 0.2); color: var(--danger-color); border: 1px solid var(--danger-color); }
         .badge.success { background-color: rgba(92, 138, 54, 0.2); color: var(--accent-color); border: 1px solid var(--accent-color); }
         
+        .product-img { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-color); background-color: #111; }
+        .id-text { font-size: 0.75rem; color: var(--text-muted); font-family: monospace; }
+
         .btn-table-shop { background-color: var(--accent-color); color: white; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 0.85rem; display: inline-block; }
         .btn-table-shop:hover { background-color: var(--accent-hover); }
         .btn-delete { background-color: var(--danger-color); padding: 6px 12px; font-size: 0.85rem; width: auto; }
@@ -72,7 +75,7 @@
 
 <div id="loginSection" class="login-card">
     <h1>Airsoft IMS</h1>
-    <p>Raktárkezelő & Profit Követő</p>
+    <p>Képes Raktár & Profit Kezelő</p>
     <div id="errorBox" class="error-msg"></div>
     <div class="form-group">
         <label>Felhasználónév</label>
@@ -107,29 +110,31 @@
     </div>
 
     <div class="panel">
-        <h3>📦 Új termék / Rendelés rögzítése</h3>
+        <h3>📦 Új termék rögzítése (Képpel & Linkkel)</h3>
         <div class="grid-inputs">
-            <input type="text" id="itemName" placeholder="Termék neve (pl. Glock 17 tár)">
-            <input type="number" id="itemQty" placeholder="Darabszám (pl. 5)">
+            <input type="text" id="itemName" placeholder="Termék neve (pl. Glock 17)">
+            <input type="number" id="itemQty" placeholder="Darabszám">
             <input type="number" id="itemBuyPrice" placeholder="Beszerzési ár (Ft)">
             <input type="number" id="itemSellPrice" placeholder="Eladási ár (Ft)">
-            <input type="url" id="itemLink" placeholder="Vásárlási link (opcionális)">
+            <input type="url" id="itemLink" placeholder="Vásárlási link (https://...)">
+            <input type="url" id="itemImg" placeholder="Termék képének linkje (URL)">
         </div>
-        <button onclick="addItem()" style="width: auto; padding: 12px 30px;">Termék mentése</button>
+        <button onclick="addItem()" style="width: auto; padding: 12px 30px;">Termék elmentése</button>
     </div>
 
     <div class="panel">
-        <h3>📋 Aktuális Készlet & Rendelési Hivatkozások</h3>
+        <h3>📋 Aktuális Készletnyilvántartás</h3>
         <div class="table-responsive">
             <table>
                 <thead>
                     <tr>
-                        <th>Termék neve</th>
+                        <th>Kép</th>
+                        <th>Termék neve & Azonosító</th>
                         <th>Mennyiség</th>
                         <th>Beszerzési ár</th>
                         <th>Eladási ár</th>
                         <th>Profit / db</th>
-                        <th>Rendelés / Link</th>
+                        <th>Rendelés</th>
                         <th>Művelet</th>
                     </tr>
                 </thead>
@@ -188,7 +193,7 @@
             let totalProfit = 0;
 
             if (totalTypes === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">A raktár üres.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted);">A raktár üres.</td></tr>';
                 updateStats(0, 0, 0);
                 return;
             }
@@ -196,13 +201,12 @@
             items.forEach(item => {
                 totalQty += item.quantity;
                 
-                // Profit kiszámítása: (Eladási - Beszerzési) * Mennyiség
                 const unitProfit = item.sellPrice - item.buyPrice;
                 if (unitProfit > 0 && item.quantity > 0) {
                     totalProfit += (unitProfit * item.quantity);
                 }
 
-                // Státusz figyelés (fogyóban van-e)
+                // Darabszám státusz
                 let qtyDisplay = `${item.quantity} db`;
                 if (item.quantity <= 3) {
                     qtyDisplay = `<span class="badge danger">FOGYÓBAN: ${item.quantity} db</span>`;
@@ -210,15 +214,25 @@
                     qtyDisplay = `<span class="badge success">${item.quantity} db</span>`;
                 }
 
-                // Vásárlás gomb generálása, ha van link csatolva
+                // Vásárlás gomb generálása
                 let linkButton = '<span style="color:var(--text-muted); font-style:italic;">Nincs link</span>';
                 if (item.link) {
                     linkButton = `<a href="${item.link}" target="_blank" class="btn-table-shop">Vásárlás ➔</a>`;
                 }
 
+                // Kép generálása (ha nincs link megadva, rakunk be egy alap szöveget)
+                let imgTag = '<div style="width:50px; height:50px; background:#111; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--text-muted);">No Img</div>';
+                if (item.img) {
+                    imgTag = `<img src="${item.img}" class="product-img" alt="Product">`;
+                }
+
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td style="font-weight:600; color:#fff;">${item.name}</td>
+                    <td>${imgTag}</td>
+                    <td>
+                        <div style="font-weight:600; color:#fff; font-size:1.05rem;">${item.name}</div>
+                        <div class="id-text">ID: ${item._id}</div>
+                    </td>
                     <td>${qtyDisplay}</td>
                     <td>${item.buyPrice.toLocaleString()} Ft</td>
                     <td>${item.sellPrice.toLocaleString()} Ft</td>
@@ -236,7 +250,6 @@
         }
     }
 
-    // Statisztika frissítő almódszer
     function updateStats(types, qty, profit) {
         document.getElementById('statTotalTypes').innerText = types;
         document.getElementById('statTotalQty').innerText = `${qty} db`;
@@ -250,13 +263,13 @@
         const buyPrice = document.getElementById('itemBuyPrice').value;
         const sellPrice = document.getElementById('itemSellPrice').value;
         let link = document.getElementById('itemLink').value.trim();
+        const img = document.getElementById('itemImg').value.trim();
 
         if (!name || !quantity || !buyPrice || !sellPrice) {
-            alert("Kérlek, tölts ki minden kötelező mezőt (Név, Db, Árak)!");
+            alert("A Név, Darabszám, Beszerzési és Eladási ár mezők kitöltése kötelező!");
             return;
         }
 
-        // Automata link korrekció
         if (link && !/^https?:\/\//i.test(link)) {
             link = 'https://' + link;
         }
@@ -265,17 +278,17 @@
             const res = await fetch(`${API_URL}?type=add_item`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, quantity, buyPrice, sellPrice, link })
+                body: JSON.stringify({ name, quantity, buyPrice, sellPrice, link, img })
             });
 
             if (res.ok) {
-                // Mezők ürítése
                 document.getElementById('itemName').value = '';
                 document.getElementById('itemQty').value = '';
                 document.getElementById('itemBuyPrice').value = '';
                 document.getElementById('itemSellPrice').value = '';
                 document.getElementById('itemLink').value = '';
-                loadInventory(); // Táblázat frissítés
+                document.getElementById('itemImg').value = '';
+                loadInventory();
             }
         } catch (e) {
             alert("Hiba történt a mentéskor!");
@@ -298,7 +311,6 @@
         }
     }
 
-    // Enter gomb figyelése loginhoz
     document.addEventListener('keypress', function (e) {
         if (e.key === 'Enter' && document.getElementById('loginSection').style.display !== 'none') {
             handleLogin();
