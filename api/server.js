@@ -23,7 +23,7 @@ export default async function handler(req, res) {
     const db = await connectDB();
     const { type, id } = req.query;
 
-    // 1. BEJELENTKEZÉS
+    // 1. BEJELENTKEZÉS (Visszaadja a Rangot is!)
     if (type === 'login' && req.method === 'POST') {
       let body = req.body;
       if (typeof body === 'string') body = JSON.parse(body);
@@ -36,7 +36,15 @@ export default async function handler(req, res) {
       if (!user || user.password !== password) {
         return res.status(401).json({ error: '⚠️ Authentication failed' });
       }
-      return res.status(200).json({ success: true, displayName: user.displayName || user.username });
+      
+      // Ha nincs megadva role a DB-ben, akkor alapból legyen 'user' a biztonság kedvéért
+      const userRole = user.role || 'user'; 
+
+      return res.status(200).json({ 
+        success: true, 
+        displayName: user.displayName || user.username,
+        role: userRole 
+      });
     }
 
     // ================= RAKTÁR (INVENTORY) KEZELÉS =================
@@ -83,7 +91,7 @@ export default async function handler(req, res) {
       const newOrder = {
         name,
         link: link || '',
-        quantity: parseInt(quantity) || 1, // Ha nincs megadva, alapból 1 db
+        quantity: parseInt(quantity) || 1,
         createdAt: new Date()
       };
       await db.collection('orders').insertOne(newOrder);
