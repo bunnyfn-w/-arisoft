@@ -51,7 +51,7 @@ export default async function handler(req, res) {
       let body = req.body;
       if (typeof body === 'string') body = JSON.parse(body);
       
-      const { name, quantity, buyPrice, sellPrice, link } = body;
+      const { name, quantity, buyPrice, sellPrice, link, img } = body;
 
       const newItem = {
         name,
@@ -59,6 +59,7 @@ export default async function handler(req, res) {
         buyPrice: parseFloat(buyPrice) || 0,
         sellPrice: parseFloat(sellPrice) || 0,
         link: link || '',
+        img: img || '', // Kép URL mentése
         createdAt: new Date()
       };
 
