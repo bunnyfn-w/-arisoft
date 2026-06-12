@@ -64,7 +64,9 @@
         
         .grid-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 150px)); gap: 10px; margin-bottom: 15px; }
         .inline-form { display: flex; flex-wrap: wrap; gap: 10px; }
-        .inline-form input { flex: 1; min-width: 200px; }
+        .inline-form .input-name { flex: 2; min-width: 200px; }
+        .inline-form .input-qty { flex: 0.5; min-width: 80px; }
+        .inline-form .input-link { flex: 2; min-width: 200px; }
 
         /* TABLES & LISTS */
         .table-responsive { overflow-x: auto; }
@@ -76,6 +78,7 @@
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
         .badge.danger { background-color: rgba(189, 58, 58, 0.2); color: var(--danger-color); border: 1px solid var(--danger-color); }
         .badge.success { background-color: rgba(92, 138, 54, 0.2); color: var(--accent-color); border: 1px solid var(--accent-color); }
+        .badge.info { background-color: rgba(92, 138, 54, 0.1); color: #fff; border: 1px solid var(--border-color); }
         
         .product-img { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-color); background-color: #111; }
         .id-text { font-size: 0.75rem; color: var(--text-muted); font-family: monospace; }
@@ -172,8 +175,9 @@
         <div class="panel">
             <h3>🛒 Új rendelendő termék felírása</h3>
             <div class="inline-form">
-                <input type="text" id="orderName" placeholder="Rendelendő dolog neve (pl. Specna Arms M4 tár)">
-                <input type="url" id="orderLink" placeholder="Webshop link (https://...)">
+                <input type="text" id="orderName" class="input-name" placeholder="Rendelendő dolog neve (pl. Specna Arms tár)">
+                <input type="number" id="orderQty" class="input-qty" placeholder="Mennyi?" value="1" min="1">
+                <input type="url" id="orderLink" class="input-link" placeholder="Webshop link (https://...)">
                 <button onclick="addOrder()" style="width: auto; padding: 12px 24px;">Hozzáadás a listához</button>
             </div>
         </div>
@@ -185,6 +189,7 @@
                     <thead>
                         <tr>
                             <th>Termék neve</th>
+                            <th>Rendelendő mennyiség</th>
                             <th>Vásárlási hivatkozás</th>
                             <th>Művelet</th>
                         </tr>
@@ -199,14 +204,12 @@
 <script>
     const API_URL = "https://videkiboys-shop.vercel.app/api/server";
 
-    // ENTER TÁMOGATÁS LOGINHOZ
     document.addEventListener('keypress', function (e) {
         if (e.key === 'Enter' && document.getElementById('loginSection').style.display !== 'none') {
             handleLogin();
         }
     });
 
-    // FÜL VÁLTÓ LOGIKA
     function switchTab(tabId, btn) {
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -218,7 +221,6 @@
         if(tabId === 'ordersTab') loadOrders();
     }
 
-    // LOGIN
     async function handleLogin() {
         const user = document.getElementById('username').value.trim();
         const pass = document.getElementById('password').value.trim();
@@ -250,13 +252,10 @@
         }
     }
 
-    // LOGOUT
     function handleLogout() {
         document.getElementById('mainSection').style.display = 'none';
         document.getElementById('loginSection').style.display = 'block';
         document.body.style.alignItems = 'center';
-        
-        // Mezők tisztítása
         document.getElementById('username').value = '';
         document.getElementById('password').value = '';
     }
@@ -363,14 +362,16 @@
             tbody.innerHTML = '';
 
             if (orders.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">Nincs felírt rendelés.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Nincs felírt rendelés.</td></tr>';
                 return;
             }
 
             orders.forEach(order => {
+                const orderQty = order.quantity || 1;
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td style="font-weight:600; color:#fff; font-size:1.05rem;">${order.name}</td>
+                    <td><span class="badge info">${orderQty} db</span></td>
                     <td><a href="${order.link}" target="_blank" class="btn-table-shop">Vásárlás ➔</a></td>
                     <td><button class="btn-delete" onclick="deleteOrder('${order._id}')">Megérkezett / Törlés</button></td>
                 `;
@@ -381,8 +382,11 @@
 
     async function addOrder() {
         const nameInput = document.getElementById('orderName');
+        const qtyInput = document.getElementById('orderQty');
         const linkInput = document.getElementById('orderLink');
+        
         const name = nameInput.value.trim();
+        const quantity = qtyInput.value;
         let link = linkInput.value.trim();
 
         if (!name || !link) { alert("Kérlek, add meg a nevét és a vásárlási linket is!"); return; }
@@ -392,10 +396,11 @@
             const res = await fetch(`${API_URL}?type=add_order`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, link })
+                body: JSON.stringify({ name, link, quantity })
             });
             if (res.ok) {
                 nameInput.value = '';
+                qtyInput.value = '1';
                 linkInput.value = '';
                 loadOrders();
             }
