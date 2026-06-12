@@ -78,11 +78,12 @@ export default async function handler(req, res) {
     if (type === 'add_order' && req.method === 'POST') {
       let body = req.body;
       if (typeof body === 'string') body = JSON.parse(body);
-      const { name, link } = body;
+      const { name, link, quantity } = body;
 
       const newOrder = {
         name,
         link: link || '',
+        quantity: parseInt(quantity) || 1, // Ha nincs megadva, alapból 1 db
         createdAt: new Date()
       };
       await db.collection('orders').insertOne(newOrder);
