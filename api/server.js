@@ -5,9 +5,7 @@ let client = null;
 
 async function connectDB() {
   if (!client) {
-    if (!uri) {
-      throw new Error("A MONGODB_URI hianyzik a Vercel beallitasokbol!");
-    }
+    if (!uri) throw new Error("A MONGODB_URI hianyzik!");
     client = new MongoClient(uri);
     await client.connect();
   }
@@ -15,82 +13,69 @@ async function connectDB() {
 }
 
 export default async function handler(req, res) {
-  // CORS fixek
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
     const db = await connectDB();
-    const { type } = req.query;
+    const collection = db.collection('inventory');
+    const { type, id } = req.query;
 
-    // ==========================================
-    // 1. BEJELENTKEZÉS KEZELÉSE
-    // ==========================================
+    // 1. LOGIN
     if (type === 'login' && req.method === 'POST') {
       let body = req.body;
       if (typeof body === 'string') body = JSON.parse(body);
       const { username, password } = body;
-
-      if (!username || !password) {
-        return res.status(400).json({ error: 'Hianyzo adatok!' });
-      }
 
       const user = await db.collection('users').findOne({ 
         username: { $regex: new RegExp(`^${username}$`, 'i') } 
       });
 
       if (!user || user.password !== password) {
-        return res.status(401).json({ error: '⚠️ bad auth : authentication failed' });
+        return res.status(401).json({ error: '⚠️ Authentication failed' });
       }
-
-      return res.status(200).json({ 
-        success: true, 
-        role: user.role, 
-        displayName: user.displayName || user.username 
-      });
+      return res.status(200).json({ success: true, displayName: user.displayName || user.username });
     }
 
-    // ==========================================
-    // 2. RENDELÉSI LISTA LEKÉRÉSE (GET)
-    // ==========================================
-    if (type === 'get_orders' && req.method === 'GET') {
-      const orders = await db.collection('orders').find({}).toArray();
-      return res.status(200).json(orders);
+    // 2. KÉSZLET LEKÉRÉSE (GET)
+    if (type === 'get_inventory' && req.method === 'GET') {
+      const items = await collection.find({}).toArray();
+      return res.status(200).json(items);
     }
 
-    // ==========================================
-    // 3. ÚJ TERMÉK HOZZÁADÁSA A LISTÁHOZ (POST)
-    // ==========================================
-    if (type === 'add_order' && req.method === 'POST') {
+    // 3. TERMÉK HOZZÁADÁSA (POST)
+    if (type === 'add_item' && req.method === 'POST') {
       let body = req.body;
       if (typeof body === 'string') body = JSON.parse(body);
-      const { name, link } = body;
+      
+      const { name, quantity, buyPrice, sellPrice, link } = body;
 
-      if (!name || !link) {
-        return res.status(400).json({ error: 'A nev és a link kötelezo!' });
-      }
-
-      const newOrder = {
+      const newItem = {
         name,
-        link,
+        quantity: parseInt(quantity) || 0,
+        buyPrice: parseFloat(buyPrice) || 0,
+        sellPrice: parseFloat(sellPrice) || 0,
+        link: link || '',
         createdAt: new Date()
       };
 
-      await db.collection('orders').insertOne(newOrder);
-      return res.status(201).json({ success: true, message: 'Termék hozzáadva!' });
+      await collection.insertOne(newItem);
+      return res.status(201).json({ success: true });
     }
 
-    return res.status(404).json({ error: 'Nem talalhato útvonal' });
+    // 4. TERMÉK TÖRLÉSE (DELETE)
+    if (type === 'delete_item' && req.method === 'DELETE') {
+      if (!id) return res.status(400).json({ error: 'Hianyzik az ID' });
+      await collection.deleteOne({ _id: new ObjectId(id) });
+      return res.status(200).json({ success: true });
+    }
+
+    return res.status(404).json({ error: 'Utvonal nem talalhato' });
 
   } catch (error) {
-    return res.status(500).json({ 
-      error: 'Belso szerverhiba', 
-      message: error.message 
-    });
+    return res.status(500).json({ error: 'Szerverhiba', message: error.message });
   }
 }
