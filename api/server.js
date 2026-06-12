@@ -23,7 +23,7 @@ export default async function handler(req, res) {
     const db = await connectDB();
     const { type, id } = req.query;
 
-    // 1. BEJELENTKEZÉS (Visszaadja a Rangot is!)
+    // 1. BEJELENTKEZÉS
     if (type === 'login' && req.method === 'POST') {
       let body = req.body;
       if (typeof body === 'string') body = JSON.parse(body);
@@ -37,8 +37,8 @@ export default async function handler(req, res) {
         return res.status(401).json({ error: '⚠️ Authentication failed' });
       }
       
-      // Ha nincs megadva role a DB-ben, akkor alapból legyen 'user' a biztonság kedvéért
-      const userRole = user.role || 'user'; 
+      // FORDÍTOTT LOGIKA: Alapból mindenki 'admin', kivéve ha a DB-ben DIREKT 'user' van megadva rangként
+      const userRole = user.role === 'user' ? 'user' : 'admin'; 
 
       return res.status(200).json({ 
         success: true, 
