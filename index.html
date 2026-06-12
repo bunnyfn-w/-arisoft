@@ -1,194 +1,221 @@
 <!DOCTYPE html>
-<html lang="hu" class="h-full bg-gray-950 text-gray-100">
+<html lang="hu">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Airsoft IMS - Raktár és Értékesítés</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        darkBg: '#0b0f19',
-                        cardBg: '#111827',
-                        accent: '#3b82f6',
-                        accentHover: '#2563eb'
-                    }
-                }
-            }
+    <title>Airsoft IMS - Belépés</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --panel-bg: #242424;
+            --accent-color: #5c8a36; /* Airsoft zöld */
+            --accent-hover: #466929;
+            --text-color: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --border-color: #333333;
+            --danger-color: #bd3a3a;
         }
-    </script>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .login-card {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 40px 30px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        .login-card h1 {
+            font-size: 1.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+
+        .login-card p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+        }
+
+        input {
+            background-color: #111;
+            border: 1px solid var(--border-color);
+            color: #fff;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 1rem;
+            width: 100%;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        button {
+            background-color: var(--accent-color);
+            color: #fff;
+            border: none;
+            padding: 14px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            width: 100%;
+            letter-spacing: 1px;
+            margin-top: 10px;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .error-msg {
+            color: var(--danger-color);
+            background-color: rgba(189, 58, 58, 0.1);
+            border: 1px solid var(--danger-color);
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            display: none;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .loading-spinner {
+            display: none;
+            color: var(--accent-color);
+            font-weight: bold;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+    </style>
 </head>
-<body class="h-full font-sans antialiased bg-darkBg text-gray-200">
+<body>
 
-    <div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-darkBg px-4">
-        <div class="bg-cardBg p-8 rounded-xl border border-gray-800 shadow-2xl w-full max-w-md">
-            <div class="text-center mb-6">
-                <span class="text-4xl">🔐</span>
-                <h1 class="text-2xl font-bold text-white mt-2">Airsoft IMS Belépés</h1>
-                <p class="text-sm text-gray-400 mt-1">Kérjük, azonosítsa magát a folytatáshoz</p>
-            </div>
-            <form id="login-form" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Felhasználónév</label>
-                    <input type="text" id="login-username" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500" placeholder="Felhasználónév">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Jelszó</label>
-                    <input type="password" id="login-password" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500" placeholder="••••••••">
-                </div>
-                <div id="login-error" class="text-rose-500 text-sm hidden font-medium">⚠️ Hibás felhasználónév vagy jelszó!</div>
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition duration-200">
-                    Bejelentkezés
-                </button>
-            </form>
-        </div>
+<div class="login-card">
+    <h1>Airsoft IMS</h1>
+    <p>Raktárkezelő & Beszerzés Rendszer</p>
+
+    <div id="errorBox" class="error-msg"></div>
+
+    <div class="form-group">
+        <label for="username">Felhasználónév</label>
+        <input type="text" id="username" placeholder="pl. admin" autocomplete="off">
     </div>
 
-    <div id="main-app" class="hidden">
-        <nav class="bg-cardBg border-b border-gray-800 sticky top-0 z-40">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex items-center justify-between h-16">
-                    <div class="flex items-center gap-3">
-                        <span class="text-2xl">🔫</span>
-                        <span class="font-bold text-xl tracking-wider text-white">AIRSOFT <span class="text-blue-500">IMS</span></span>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <div class="text-sm bg-gray-800 px-3 py-1.5 rounded-md border border-gray-700 text-gray-300">
-                            Felhasználó: <span id="current-user-display" class="font-bold text-blue-400">Nem ismert</span>
-                        </div>
-                        <button id="logout-btn" class="bg-gray-900 hover:bg-rose-950 text-gray-400 hover:text-rose-400 px-3 py-1.5 rounded-md border border-gray-700 hover:border-rose-900 text-sm font-medium transition">
-                            Kijelentkezés
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </nav>
-
-        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-            <section class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="bg-cardBg p-6 rounded-xl border border-gray-800 shadow-lg">
-                    <p class="text-sm font-medium text-gray-400 uppercase tracking-wider">Összes Bevétel</p>
-                    <p id="stats-revenue" class="text-2xl font-bold text-emerald-400 mt-2">0 Ft</p>
-                </div>
-                <div class="bg-cardBg p-6 rounded-xl border border-gray-800 shadow-lg">
-                    <p class="text-sm font-medium text-gray-400 uppercase tracking-wider">Összes Profit</p>
-                    <p id="stats-profit" class="text-2xl font-bold text-blue-400 mt-2">0 Ft</p>
-                </div>
-                <div class="bg-cardBg p-6 rounded-xl border border-gray-800 shadow-lg">
-                    <p class="text-sm font-medium text-gray-400 uppercase tracking-wider">Készlethiány (Kritikus)</p>
-                    <p id="stats-low-stock" class="text-2xl font-bold text-rose-500 mt-2">0 db</p>
-                </div>
-                <div class="bg-cardBg p-6 rounded-xl border border-gray-800 shadow-lg">
-                    <p class="text-sm font-medium text-gray-400 uppercase tracking-wider">Legnépszerűbb Termék</p>
-                    <p id="stats-bestseller" class="text-md font-semibold text-amber-400 mt-3 truncate">-</p>
-                </div>
-            </section>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <section id="admin-product-section" class="bg-cardBg p-6 rounded-xl border border-gray-800 shadow-md relative min-h-[300px] flex flex-col justify-center">
-                    <div id="admin-lock-overlay" class="hidden absolute inset-0 bg-gray-900/90 rounded-xl flex flex-col items-center justify-center p-6 text-center z-10">
-                        <span class="text-3xl mb-2">🔒</span>
-                        <p class="text-gray-300 font-medium">Új termék rögzítése letiltva</p>
-                        <p class="text-xs text-gray-500 mt-1">Ezt a panelt kizárólag <span class="text-blue-400 font-semibold">Admin</span> jogkörrel rendelkező felhasználók használhatják.</p>
-                    </div>
-                    <div id="admin-form-wrapper" class="w-full">
-                        <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                            <span class="text-blue-500">✚</span> Új Termék Hozzáadása
-                        </h2>
-                        <form id="product-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div class="sm:col-span-2">
-                                <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Termék Neve</label>
-                                <input type="text" id="p-name" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">SKU / Egyedi Azonosító</label>
-                                <input type="text" id="p-sku" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500" placeholder="pl. AEG-M4-01">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Kategória</label>
-                                <select id="p-category" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500">
-                                    <option value="AEGs">AEGs (Elektromos)</option>
-                                    <option value="GBBs">GBBs (Gázos)</option>
-                                    <option value="Taktikai felszerelés">Taktikai felszerelés</option>
-                                    <option value="Kiegészítők">Kiegészítők (BB, Gáz, stb.)</option>
-                                    <option value="Alkatrészek">Alkatrészek</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Beszerzési Ár (Ft)</label>
-                                <input type="number" id="p-buy" min="0" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Eladási Ár (Ft)</label>
-                                <input type="number" id="p-sell" min="0" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Kezdő Készlet (db)</label>
-                                <input type="number" id="p-stock" min="0" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Minimális Készlet (db)</label>
-                                <input type="number" id="p-min" min="0" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500" value="3">
-                            </div>
-                            <button type="submit" class="sm:col-span-2 mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition duration-200">
-                                Termék Mentése
-                            </button>
-                        </form>
-                    </div>
-                </section>
-
-                <section class="bg-cardBg p-6 rounded-xl border border-gray-800 shadow-md flex flex-col justify-between min-h-[300px]">
-                    <div>
-                        <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                            <span class="text-emerald-500">🛒</span> Új Eladás Rögzítése
-                        </h2>
-                        <form id="sale-form" class="space-y-4">
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Termék Kiválasztása</label>
-                                <select id="sale-product-id" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500">
-                                    <option value="">-- Válassz terméket --</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Mennyiség (db)</label>
-                                <input type="number" id="sale-qty" min="1" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500" value="1">
-                            </div>
-                            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 rounded-lg transition duration-200">
-                                Tranzakció Végrehajtása
-                            </button>
-                        </form>
-                    </div>
-                    <div id="sale-feedback" class="mt-4 hidden p-3 rounded-lg text-sm text-center"></div>
-                </section>
-            </div>
-
-            <section class="bg-cardBg rounded-xl border border-gray-800 shadow-md overflow-hidden">
-                <div class="p-6 border-b border-gray-800 flex justify-between items-center flex-wrap gap-4">
-                    <h2 class="text-lg font-bold text-white">Aktuális Raktárkészlet</h2>
-                    <span class="text-xs text-gray-400 bg-gray-900 px-3 py-1 rounded-full border border-gray-800">Élő adatbázis szinkronizáció</span>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-gray-900 text-gray-400 text-xs uppercase tracking-wider border-b border-gray-800">
-                                <th class="py-3 px-6">SKU</th>
-                                <th class="py-3 px-6">Termék neve</th>
-                                <th class="py-3 px-6">Kategória</th>
-                                <th class="py-3 px-6 text-right">Beszerzés</th>
-                                <th class="py-3 px-6 text-right">Eladás</th>
-                                <th class="py-3 px-6 text-center">Készlet</th>
-                                <th class="py-3 px-6 text-center">Művelet</th>
-                            </tr>
-                        </thead>
-                        <tbody id="product-table-body" class="divide-y divide-gray-800 text-sm"></tbody>
-                    </table>
-                </div>
-            </section>
-        </main>
+    <div class="form-group">
+        <label for="password">Jelszó</label>
+        <input type="password" id="password" placeholder="••••••••">
     </div>
 
-    <script src="app.js"></script>
+    <button onclick="handleLogin()">Bejelentkezés</button>
+    
+    <div id="loadingStatus" class="loading-spinner">Ellenőrzés a MongoDB-ben...</div>
+</div>
+
+<script>
+    // A Vercel API elérési utad
+    const API_URL = "https://videkiboys-shop.vercel.app/api/server";
+
+    async function handleLogin() {
+        const usernameInput = document.getElementById('username').value.trim();
+        const passwordInput = document.getElementById('password').value.trim();
+        const errorBox = document.getElementById('errorBox');
+        const loadingStatus = document.getElementById('loadingStatus');
+
+        // Alap üzenetek elrejtése
+        errorBox.style.display = 'none';
+
+        if (!usernameInput || !passwordInput) {
+            errorBox.innerText = "⚠️ Töltsd ki az összes mezőt!";
+            errorBox.style.display = 'block';
+            return;
+        }
+
+        loadingStatus.style.display = 'block';
+
+        try {
+            // Lekérés a Vercel backendre
+            const response = await fetch(`${API_URL}?type=login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: usernameInput,
+                    password: passwordInput
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                // SIKERES BELÉPÉS: Átirányítás a rendelési listára
+                // Eltároljuk a nevet a biztonság kedvéért localstorage-ba
+                localStorage.setItem('ims_user', data.displayName);
+                window.location.href = "admin.html";
+            } else {
+                // HIBÁS BELÉPÉS (pl. 401-es hiba)
+                errorBox.innerText = data.error || "⚠️ Hibás felhasználónév vagy jelszó!";
+                errorBox.style.display = 'block';
+            }
+
+        } catch (error) {
+            console.error("Bejelentkezési hiba:", error);
+            errorBox.innerText = "❌ Hálózati hiba történt! A szerver nem elérhető.";
+            errorBox.style.display = 'block';
+        } finally {
+            loadingStatus.style.display = 'none';
+        }
+    }
+
+    // Enter gomb lenyomására is indítsa el a bejelentkezést
+    document.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            handleLogin();
+        }
+    });
+</script>
+
 </body>
 </html>
