@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Airsoft IMS - Rendelési Lista</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --panel-bg: #242424;
+            --accent-color: #5c8a36; /* Airsoft zöld */
+            --accent-hover: #466929;
+            --text-color: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --border-color: #333333;
+            --danger-color: #bd3a3a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        header {
+            margin-bottom: 30px;
+            text-align: center;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 15px;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #fff;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .panel {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .panel h3 {
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            border-left: 4px solid var(--accent-color);
+            padding-left: 10px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        input {
+            background-color: #111;
+            border: 1px solid var(--border-color);
+            color: #fff;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 0.95rem;
+            flex: 1;
+            min-width: 200px;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        button {
+            background-color: var(--accent-color);
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .order-list {
+            list-style: none;
+        }
+
+        .order-item {
+            background-color: #1c1c1c;
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .order-item:hover {
+            transform: translateX(3px);
+            border-color: #444;
+        }
+
+        .order-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .order-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #fff;
+        }
+
+        .order-date {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .btn-shop {
+            background-color: var(--accent-color);
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: background-color 0.2s;
+        }
+
+        .btn-shop:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .empty-message {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 20px;
+            font-style: italic;
+        }
+
+        .loading {
+            text-align: center;
+            color: var(--accent-color);
+            font-weight: bold;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Airsoft IMS</h1>
+        <p>Szükséges beszerzések és rendelések követése</p>
+    </header>
+
+    <div class="panel">
+        <h3>🛒 Új rendelendő termék hozzáadása</h3>
+        <div class="form-group">
+            <input type="text" id="orderName" placeholder="Termék neve (pl. Specna Arms Mid-Cap tár)">
+            <input type="url" id="orderLink" placeholder="Vásárlási link (https://...)">
+            <button onclick="addOrder()">Hozzáadás</button>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h3>📋 Aktuális rendelési lista</h3>
+        <div id="loadingStatus" class="loading" style="display: none;">Adatok betöltése...</div>
+        <ul id="orderList" class="order-list">
+            </ul>
+    </div>
+</div>
+
+<script>
+    // A Vercel API elérési utad
+    const API_URL = "https://videkiboys-shop.vercel.app/api/server";
+
+    // RENDELÉSEK BETÖLTÉSE
+    async function loadOrders() {
+        const listElement = document.getElementById('orderList');
+        const loadingStatus = document.getElementById('loadingStatus');
+        
+        loadingStatus.style.display = 'block';
+        
+        try {
+            const response = await fetch(`${API_URL}?type=get_orders`);
+            if (!response.ok) throw new Error('Hiba a lekérés során');
+            
+            const orders = await response.json();
+            listElement.innerHTML = ''; // Régi elemek törlése
+
+            if (orders.length === 0) {
+                listElement.innerHTML = '<li class="empty-message">Nincs jelenleg rendelendő termék a listán.</li>';
+                return;
+            }
+
+            orders.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'order-item';
+
+                // Dátum formázása ha van, ha nincs akkor aktuális idő
+                const orderDate = item.createdAt ? new Date(item.createdAt).toLocaleDateString('hu-HU') : 'N/A';
+
+                li.innerHTML = `
+                    <div class="order-info">
+                        <span class="order-name">${item.name}</span>
+                        <span class="order-date">Hozzáadva: ${orderDate}</span>
+                    </div>
+                    <a href="${item.link}" target="_blank" class="btn-shop">Vásárlás ➔</a>
+                `;
+                listElement.appendChild(li);
+            });
+        } catch (error) {
+            console.error("Nem sikerült betölteni a rendeléseket:", error);
+            listElement.innerHTML = '<li class="empty-message" style="color: #bd3a3a;">Hiba történt a szerverrel való kommunikáció során!</li>';
+        } finally {
+            loadingStatus.style.display = 'none';
+        }
+    }
+
+    // ÚJ TERMÉK HOZZÁADÁSA
+    async function addOrder() {
+        const nameInput = document.getElementById('orderName');
+        const linkInput = document.getElementById('orderLink');
+        
+        const name = nameInput.value.trim();
+        const link = linkInput.value.trim();
+
+        if (!name || !link) {
+            alert("Kérlek, töltsd ki a termék nevét és a linket is!");
+            return;
+        }
+
+        // Alap URL validáció, ha nem kezdődik http-vel, megjavítjuk
+        let validLink = link;
+        if (!/^https?:\/\//i.test(link)) {
+            validLink = 'https://' + link;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}?type=add_order`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json' 
+                },
+                body: JSON.stringify({ name: name, link: validLink })
+            });
+
+            if (response.ok) {
+                // Mezők ürítése siker esetén
+                nameInput.value = '';
+                linkInput.value = '';
+                // Lista újratöltése
+                await loadOrders();
+            } else {
+                const errData = await response.json();
+                alert("Szerver hiba: " + (errData.error || "Nem sikerült menteni"));
+            }
+        } catch (error) {
+            console.error("Hiba küldés során:", error);
+            alert("Hálózati hiba történt a küldés alatt!");
+        }
+    }
+
+    // Oldal betöltésekor azonnali lekérés indítása
+    document.addEventListener("DOMContentLoaded", loadOrders);
+</script>
+
+</body>
+</html>
