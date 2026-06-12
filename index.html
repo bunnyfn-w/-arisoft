@@ -87,6 +87,10 @@
         .btn-table-shop:hover { background-color: var(--accent-hover); }
         .btn-delete { background-color: var(--danger-color); padding: 6px 12px; font-size: 0.85rem; width: auto; }
         .btn-delete:hover { background-color: var(--danger-hover); }
+
+        /* DINAMIKUS JOGOSULTSÁG REJTEGETÉS CSS-SEL */
+        .admin-only { display: block; }
+        body.role-user .admin-only { display: none !important; }
     </style>
 </head>
 <body>
@@ -136,7 +140,7 @@
             </div>
         </div>
 
-        <div class="panel">
+        <div class="panel admin-only">
             <h3>📦 Új termék rögzítése a raktárba</h3>
             <div class="grid-inputs">
                 <input type="text" id="itemName" placeholder="Termék neve">
@@ -162,7 +166,7 @@
                             <th>Eladási ár</th>
                             <th>Profit / db</th>
                             <th>Link</th>
-                            <th>Művelet</th>
+                            <th class="admin-only">Művelet</th>
                         </tr>
                     </thead>
                     <tbody id="inventoryTableBody"></tbody>
@@ -172,7 +176,7 @@
     </div>
 
     <div id="ordersTab" class="tab-content">
-        <div class="panel">
+        <div class="panel admin-only">
             <h3>🛒 Új rendelendő termék felírása</h3>
             <div class="inline-form">
                 <input type="text" id="orderName" class="input-name" placeholder="Rendelendő dolog neve (pl. Specna Arms tár)">
@@ -191,7 +195,7 @@
                             <th>Termék neve</th>
                             <th>Rendelendő mennyiség</th>
                             <th>Vásárlási hivatkozás</th>
-                            <th>Művelet</th>
+                            <th class="admin-only">Művelet</th>
                         </tr>
                     </thead>
                     <tbody id="ordersTableBody"></tbody>
@@ -203,6 +207,7 @@
 
 <script>
     const API_URL = "https://videkiboys-shop.vercel.app/api/server";
+    let currentUserRole = "admin"; // Alapértelmezett beállítás
 
     document.addEventListener('keypress', function (e) {
         if (e.key === 'Enter' && document.getElementById('loginSection').style.display !== 'none') {
@@ -236,10 +241,19 @@
             const data = await res.json();
 
             if (res.ok && data.success) {
+                currentUserRole = data.role || "admin"; 
+                
+                if (currentUserRole === 'user') {
+                    document.body.classList.add('role-user');
+                    document.getElementById('userBadge').innerText = `👤 ${data.displayName} (Tag / Néző)`;
+                } else {
+                    document.body.classList.remove('role-user');
+                    document.getElementById('userBadge').innerText = `⚙️ ${data.displayName} (Admin)`;
+                }
+
                 document.getElementById('loginSection').style.display = 'none';
                 document.body.style.alignItems = 'flex-start';
                 document.getElementById('mainSection').style.display = 'block';
-                document.getElementById('userBadge').innerText = `👤 ${data.displayName}`;
                 document.getElementById('password').value = '';
                 loadInventory();
             } else {
@@ -258,9 +272,10 @@
         document.body.style.alignItems = 'center';
         document.getElementById('username').value = '';
         document.getElementById('password').value = '';
+        document.body.classList.remove('role-user');
     }
 
-    // ================= RAKTÁR SCENE MŰVELETEK =================
+    // ================= RAKTÁR MŰVELETEK =================
     async function loadInventory() {
         const tbody = document.getElementById('inventoryTableBody');
         try {
@@ -290,6 +305,8 @@
                 let linkButton = item.link ? `<a href="${item.link}" target="_blank" class="btn-table-shop">Megnyitás ➔</a>` : '<span style="color:var(--text-muted);">Nincs</span>';
                 let imgTag = item.img ? `<img src="${item.img}" class="product-img" alt="Product">` : '<div style="width:50px; height:50px; background:#111; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--text-muted);">No Img</div>';
 
+                let actionTd = currentUserRole === 'admin' ? `<td><button class="btn-delete" onclick="deleteItem('${item._id}')">Törlés</button></td>` : '';
+
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${imgTag}</td>
@@ -302,7 +319,7 @@
                     <td>${item.sellPrice.toLocaleString()} Ft</td>
                     <td style="color:var(--accent-color); font-weight:bold;">${unitProfit.toLocaleString()} Ft</td>
                     <td>${linkButton}</td>
-                    <td><button class="btn-delete" onclick="deleteItem('${item._id}')">Törlés</button></td>
+                    ${actionTd}
                 `;
                 tbody.appendChild(tr);
             });
@@ -317,6 +334,7 @@
     }
 
     async function addItem() {
+        if(currentUserRole !== 'admin') return alert("Nincs jogosultságod!");
         const name = document.getElementById('itemName').value.trim();
         const quantity = document.getElementById('itemQty').value;
         const buyPrice = document.getElementById('itemBuyPrice').value;
@@ -346,6 +364,7 @@
     }
 
     async function deleteItem(id) {
+        if(currentUserRole !== 'admin') return alert("Nincs jogosultságod!");
         if (!confirm("Törlöd ezt a terméket a raktárból?")) return;
         try {
             const res = await fetch(`${API_URL}?type=delete_item&id=${id}`, { method: 'DELETE' });
@@ -353,7 +372,7 @@
         } catch (e) { alert("Hiba a törléskor!"); }
     }
 
-    // ================= RENDELÉSI LISTA SCENE MŰVELETEK =================
+    // ================= RENDELÉSI LISTA MŰVELETEK =================
     async function loadOrders() {
         const tbody = document.getElementById('ordersTableBody');
         try {
@@ -368,12 +387,14 @@
 
             orders.forEach(order => {
                 const orderQty = order.quantity || 1;
+                let actionTd = currentUserRole === 'admin' ? `<td><button class="btn-delete" onclick="deleteOrder('${order._id}')">Megérkezett / Törlés</button></td>` : '';
+
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td style="font-weight:600; color:#fff; font-size:1.05rem;">${order.name}</td>
                     <td><span class="badge info">${orderQty} db</span></td>
                     <td><a href="${order.link}" target="_blank" class="btn-table-shop">Vásárlás ➔</a></td>
-                    <td><button class="btn-delete" onclick="deleteOrder('${order._id}')">Megérkezett / Törlés</button></td>
+                    ${actionTd}
                 `;
                 tbody.appendChild(tr);
             });
@@ -381,6 +402,7 @@
     }
 
     async function addOrder() {
+        if(currentUserRole !== 'admin') return alert("Nincs jogosultságod!");
         const nameInput = document.getElementById('orderName');
         const qtyInput = document.getElementById('orderQty');
         const linkInput = document.getElementById('orderLink');
@@ -408,6 +430,7 @@
     }
 
     async function deleteOrder(id) {
+        if(currentUserRole !== 'admin') return alert("Nincs jogosultságod!");
         try {
             const res = await fetch(`${API_URL}?type=delete_order&id=${id}`, { method: 'DELETE' });
             if (res.ok) loadOrders();
