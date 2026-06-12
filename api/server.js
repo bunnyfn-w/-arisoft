@@ -21,10 +21,9 @@ export default async function handler(req, res) {
 
   try {
     const db = await connectDB();
-    const collection = db.collection('inventory');
     const { type, id } = req.query;
 
-    // 1. LOGIN
+    // 1. BEJELENTKEZÉS
     if (type === 'login' && req.method === 'POST') {
       let body = req.body;
       if (typeof body === 'string') body = JSON.parse(body);
@@ -40,17 +39,15 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true, displayName: user.displayName || user.username });
     }
 
-    // 2. KÉSZLET LEKÉRÉSE (GET)
+    // ================= RAKTÁR (INVENTORY) KEZELÉS =================
     if (type === 'get_inventory' && req.method === 'GET') {
-      const items = await collection.find({}).toArray();
+      const items = await db.collection('inventory').find({}).toArray();
       return res.status(200).json(items);
     }
 
-    // 3. TERMÉK HOZZÁADÁSA (POST)
     if (type === 'add_item' && req.method === 'POST') {
       let body = req.body;
       if (typeof body === 'string') body = JSON.parse(body);
-      
       const { name, quantity, buyPrice, sellPrice, link, img } = body;
 
       const newItem = {
@@ -59,18 +56,42 @@ export default async function handler(req, res) {
         buyPrice: parseFloat(buyPrice) || 0,
         sellPrice: parseFloat(sellPrice) || 0,
         link: link || '',
-        img: img || '', // Kép URL mentése
+        img: img || '',
         createdAt: new Date()
       };
-
-      await collection.insertOne(newItem);
+      await db.collection('inventory').insertOne(newItem);
       return res.status(201).json({ success: true });
     }
 
-    // 4. TERMÉK TÖRLÉSE (DELETE)
     if (type === 'delete_item' && req.method === 'DELETE') {
       if (!id) return res.status(400).json({ error: 'Hianyzik az ID' });
-      await collection.deleteOne({ _id: new ObjectId(id) });
+      await db.collection('inventory').deleteOne({ _id: new ObjectId(id) });
+      return res.status(200).json({ success: true });
+    }
+
+    // ================= RENDELÉSI LISTA (ORDERS) KEZELÉS =================
+    if (type === 'get_orders' && req.method === 'GET') {
+      const orders = await db.collection('orders').find({}).toArray();
+      return res.status(200).json(orders);
+    }
+
+    if (type === 'add_order' && req.method === 'POST') {
+      let body = req.body;
+      if (typeof body === 'string') body = JSON.parse(body);
+      const { name, link } = body;
+
+      const newOrder = {
+        name,
+        link: link || '',
+        createdAt: new Date()
+      };
+      await db.collection('orders').insertOne(newOrder);
+      return res.status(201).json({ success: true });
+    }
+
+    if (type === 'delete_order' && req.method === 'DELETE') {
+      if (!id) return res.status(400).json({ error: 'Hianyzik az ID' });
+      await db.collection('orders').deleteOne({ _id: new ObjectId(id) });
       return res.status(200).json({ success: true });
     }
 
